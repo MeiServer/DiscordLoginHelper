@@ -6,11 +6,12 @@
 	<property name="srcdir" location="${workdir}/src" />
 	<property name="libdir" location="${workdir}/lib" />
 	<property name="releasedir" location="${workdir}/releases" />
-	<property name="meiserverlibdir" location="${workdir}/MeiServerLib" />
 	<property name="destminjar" location="${releasedir}/${ant.project.name}_${version}.min.jar" />
 	<property name="destjar" location="${releasedir}/${ant.project.name}_v${version}.jar" />
 	<property name="resourcedir" location="${workdir}/resources" />
 
+	<!--
+	<property name="meiserverlibdir" location="${workdir}/MeiServerLib" />
 	<pathconvert property="lib.classpath">
 		<path>
 			<fileset id="lib.classpath.set" dir="${libdir}">
@@ -19,22 +20,23 @@
 		</path>
 	</pathconvert>
 
-	<target name="default" depends="clean, depends, build, jar, test">
-	</target>
-
 	<target name="depends">
 		<ant antfile="${meiserverlibdir}/build.xml" dir="${meiserverlibdir}" inheritall="no">
 			<property name="version" value="X" />
 		</ant>
 		<copy tofile="${libdir}/MeiServerLib.jar" file="${meiserverlibdir}/releases/MeiServerLib_vX.jar" />
 	</target>
+	-->
+
+	<target name="default" depends="clean, build, jar, test">
+	</target>
 
 	<target name="build">
 		<javac destdir="${bindir}" includeantruntime="false">
 			<src path="${srcdir}" />
-			<classpath>
+			<!-- <classpath>
 				<fileset refid="lib.classpath.set" />
-			</classpath>
+			</classpath> -->
 		</javac>
 	</target>
 
@@ -51,7 +53,7 @@
 		<jar jarfile="${destjar}">
 			<fileset dir="${bindir}" includes="**/*.class" />
 			<fileset dir="${bindir}" includes="**/*.yml" />
-			<zipgroupfileset refid="lib.classpath.set" />
+			<!-- <zipgroupfileset refid="lib.classpath.set" /> -->
 		</jar>
 
 		<jar jarfile="${destminjar}">
