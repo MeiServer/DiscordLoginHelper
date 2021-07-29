@@ -22,86 +22,88 @@ import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
-public class LoginWebView {
-	private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(3);
+public class DiscordTokenCatcher {
+	private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(100);
 	private static Scene scene;
 	private static JFrame frame;
 	private static WebView webView;
 
-	public Optional<String> getToken() throws InterruptedException {
-		this.initURLStreamHandler();
+	public static Optional<String> getToken() throws InterruptedException {
+		DiscordTokenCatcher.initURLStreamHandler();
 
 		SwingUtilities.invokeLater(() -> {
-			this.initAndShowGUI();
+			DiscordTokenCatcher.initAndShowGUI();
 		});
 
-		final String res = LoginWebView.queue.take();
+		final String res = DiscordTokenCatcher.queue.take();
 		if (res.equals("")) {
 			return Optional.empty();
 		}
 
-		LoginWebView.frame.dispose();
+		DiscordTokenCatcher.frame.dispose();
 		return Optional.of(res);
 	}
 
-	private void initURLStreamHandler() {
+	private static void initURLStreamHandler() {
 		URL.setURLStreamHandlerFactory(protocol -> {
 			if ("https".equals(protocol)) {
-				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), LoginWebView.queue, TokenIntercepter.class);
+				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), DiscordTokenCatcher.queue,
+						TokenIntercepter.class);
 			}
 			return null;
 		});
 	}
 
-	private void initAndShowGUI() {
+	private static void initAndShowGUI() {
 		// This method is invoked on Swing thread
-		LoginWebView.frame = new JFrame("Discord Login");
-		LoginWebView.frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		DiscordTokenCatcher.frame = new JFrame("Discord Login");
+		DiscordTokenCatcher.frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		final JFXPanel fxPanel = new JFXPanel();
 		fxPanel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(final ComponentEvent e) {
 				Platform.runLater(() -> {
-					final WebEngine webEngine = LoginWebView.webView.getEngine();
-					LoginWebView.webView.setPrefSize(LoginWebView.scene.getWidth(), LoginWebView.scene.getHeight());
+					final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
+					DiscordTokenCatcher.webView.setPrefSize(DiscordTokenCatcher.scene.getWidth(),
+							DiscordTokenCatcher.scene.getHeight());
 					webEngine.onResizedProperty();
 				});
 			}
 		});
 
-		LoginWebView.frame.add(fxPanel, BorderLayout.CENTER);
-		LoginWebView.frame.setVisible(true);
+		DiscordTokenCatcher.frame.add(fxPanel, BorderLayout.CENTER);
+		DiscordTokenCatcher.frame.setVisible(true);
 
-		LoginWebView.frame.addWindowListener(new WindowAdapter() {
+		DiscordTokenCatcher.frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(final WindowEvent event) {
 				try {
-					LoginWebView.queue.put("");
+					DiscordTokenCatcher.queue.put("");
 				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		});
 
-		LoginWebView.frame.getContentPane().setPreferredSize(new Dimension(1024, 768));
-		LoginWebView.frame.pack();
+		DiscordTokenCatcher.frame.getContentPane().setPreferredSize(new Dimension(1024, 768));
+		DiscordTokenCatcher.frame.pack();
 
 		Platform.runLater(() -> {
-			this.initFX(fxPanel);
+			DiscordTokenCatcher.initFX(fxPanel);
 		});
 	}
 
-	private void initFX(final JFXPanel fxPanel) {
+	private static void initFX(final JFXPanel fxPanel) {
 		final Group group = new Group();
-		LoginWebView.scene = new Scene(group);
-		fxPanel.setScene(LoginWebView.scene);
+		DiscordTokenCatcher.scene = new Scene(group);
+		fxPanel.setScene(DiscordTokenCatcher.scene);
 
-		LoginWebView.webView = new WebView();
+		DiscordTokenCatcher.webView = new WebView();
 
-		group.getChildren().add(LoginWebView.webView);
+		group.getChildren().add(DiscordTokenCatcher.webView);
 
-		final WebEngine webEngine = LoginWebView.webView.getEngine();
+		final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
 		webEngine.onResizedProperty();
 		webEngine.load("https://discord.com/channels/@me");
 	}
