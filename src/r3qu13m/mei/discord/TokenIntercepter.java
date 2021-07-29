@@ -15,7 +15,7 @@ public class TokenIntercepter extends HTTPSInterceptedConnection {
 	@Override
 	public void addRequestProperty(final String key, final String value) {
 		if (key.equals("Authorization")) {
-			this.retQueue.add(value);
+			this.retQueue.offer(value);
 		}
 		super.addRequestProperty(key, value);
 	}
