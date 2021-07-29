@@ -7,8 +7,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
-import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -17,81 +16,76 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker.State;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import r3qu13m.mei.lib.Discord;
 
 public class LoginWebView {
-	private static Discord discord;
-	private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+	private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(3);
 	private static Scene scene;
 	private static JFrame frame;
 	private static WebView webView;
 
-	public void login() throws InterruptedException {
-		discord = new Discord();
+	public Optional<String> getToken() throws InterruptedException {
 		this.initURLStreamHandler();
+
 		SwingUtilities.invokeLater(() -> {
 			this.initAndShowGUI();
 		});
 
-		final String res = queue.take();
+		final String res = LoginWebView.queue.take();
 		if (res.equals("")) {
-			System.exit(0);
+			return Optional.empty();
 		}
-		discord.authorize(res);
+
+		LoginWebView.frame.dispose();
+		return Optional.of(res);
 	}
 
 	private void initURLStreamHandler() {
-		URL.setURLStreamHandlerFactory(new URLStreamHandlerFactory() {
-			public URLStreamHandler createURLStreamHandler(String protocol) {
-				if ("https".equals(protocol)) {
-					return new HTTPSIntercepter();
-				}
-				return null;
+		URL.setURLStreamHandlerFactory(protocol -> {
+			if ("https".equals(protocol)) {
+				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), LoginWebView.queue, TokenIntercepter.class);
 			}
+			return null;
 		});
 	}
 
 	private void initAndShowGUI() {
 		// This method is invoked on Swing thread
-		frame = new JFrame("Discord Login");
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		LoginWebView.frame = new JFrame("Discord Login");
+		LoginWebView.frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		final JFXPanel fxPanel = new JFXPanel();
 		fxPanel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(final ComponentEvent e) {
 				Platform.runLater(() -> {
-					final WebEngine webEngine = webView.getEngine();
-					webView.setPrefSize(scene.getWidth(), scene.getHeight());
+					final WebEngine webEngine = LoginWebView.webView.getEngine();
+					LoginWebView.webView.setPrefSize(LoginWebView.scene.getWidth(), LoginWebView.scene.getHeight());
 					webEngine.onResizedProperty();
 				});
 			}
 		});
 
-		frame.add(fxPanel, BorderLayout.CENTER);
-		frame.setVisible(true);
+		LoginWebView.frame.add(fxPanel, BorderLayout.CENTER);
+		LoginWebView.frame.setVisible(true);
 
-		frame.addWindowListener(new WindowAdapter() {
+		LoginWebView.frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(final WindowEvent event) {
 				try {
-					queue.put("");
-					Thread.currentThread().destroy();
+					LoginWebView.queue.put("");
 				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		});
 
-		frame.getContentPane().setPreferredSize(new Dimension(1024, 768));
-		frame.pack();
+		LoginWebView.frame.getContentPane().setPreferredSize(new Dimension(1024, 768));
+		LoginWebView.frame.pack();
 
 		Platform.runLater(() -> {
 			this.initFX(fxPanel);
@@ -100,33 +94,15 @@ public class LoginWebView {
 
 	private void initFX(final JFXPanel fxPanel) {
 		final Group group = new Group();
-		scene = new Scene(group);
-		fxPanel.setScene(scene);
+		LoginWebView.scene = new Scene(group);
+		fxPanel.setScene(LoginWebView.scene);
 
-		webView = new WebView();
+		LoginWebView.webView = new WebView();
 
-		group.getChildren().add(webView);
+		group.getChildren().add(LoginWebView.webView);
 
-		final WebEngine webEngine = webView.getEngine();
+		final WebEngine webEngine = LoginWebView.webView.getEngine();
 		webEngine.onResizedProperty();
-		webEngine.setJavaScriptEnabled(true);
-		webEngine.getLoadWorker().stateProperty()
-				.addListener((final ObservableValue<State> ov, final State oldState, final State newState) -> {
-					if (newState == State.SCHEDULED) {
-						if (webEngine.getLocation().contains("example.com")) {
-							try {
-								final String[] args = webEngine.getLocation().split("code=");
-								if (args.length == 2) {
-									queue.put(args[1]);
-									frame.dispose();
-									Thread.currentThread().destroy();
-								}
-							} catch (final InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-				});
-		webEngine.load(discord.getAuthorizationURL());
+		webEngine.load("https://discord.com/channels/@me");
 	}
 }
