@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DiscordLoginHelper" default="default">
+	<property name="version" value="1.0.0" />
+	<property name="workdir" location="." />
+	<property name="bindir" location="${workdir}/build" />
+	<property name="srcdir" location="${workdir}/src" />
+	<property name="libdir" location="${workdir}/lib" />
+	<property name="releasedir" location="${workdir}/releases" />
+	<property name="meiserverlibdir" location="${workdir}/MeiServerLib" />
+	<property name="destminjar" location="${releasedir}/MeiServer_${version}.min.jar" />
+	<property name="destjar" location="${releasedir}/DiscordLoginHelper_v${version}.jar" />
+	<property name="resourcedir" location="${workdir}/resources" />
+
+	<pathconvert property="lib.classpath">
+		<path>
+			<fileset id="lib.classpath.set" dir="${libdir}">
+				<include name="MeiServerLib.jar" />
+			</fileset>
+		</path>
+	</pathconvert>
+
+	<target name="default" depends="clean, depends, build, jar, test">
+	</target>
+
+	<target name="depends">
+		<ant antfile="${meiserverlibdir}/build.xml" dir="${meiserverlibdir}" inheritall="no">
+			<property name="version" value="X" />
+		</ant>
+		<copy tofile="${libdir}/MeiServerLib.jar" file="${meiserverlibdir}/releases/MeiServerLib_vX.jar" />
+	</target>
+
+	<target name="build">
+		<javac destdir="${bindir}" includeantruntime="false">
+			<src path="${srcdir}" />
+			<classpath>
+				<fileset refid="lib.classpath.set" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar">
+		<copy todir="${bindir}">
+			<fileset dir="${resourcedir}" />
+		</copy>
+
+		<replace dir="${bindir}" token="%%VERSION%%" value="${version}">
+			<include name="**/*.yml" />
+		</replace>
+
+		<jar jarfile="${destjar}">
+			<fileset dir="${bindir}" includes="**/*.class" />
+			<fileset dir="${bindir}" includes="**/*.yml" />
+			<zipgroupfileset refid="lib.classpath.set" />
+		</jar>
+
+		<jar jarfile="${destminjar}">
+			<fileset dir="${bindir}" includes="**/*.class" />
+			<fileset dir="${bindir}" includes="**/*.yml" />
+		</jar>
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir="${bindir}">
+				<include name="*.class" />
+				<include name="*.yml" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="test">
+		<!--<junit>
+			<classpath>
+				<pathelement location="${destjar}" />
+			</classpath>
+		</junit>-->
+	</target>
+</project>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_301"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="MeiServerLib/src"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/commons-codec-1.15.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/jackson-annotations-2.3.0.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/jackson-core-2.3.0.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/jackson-databind-2.3.0.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/junit-4.12.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/scribejava-apis-8.3.1.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/scribejava-core-8.3.1.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/scribejava-java8-8.3.1.jar"/>
+	<classpathentry kind="lib" path="MeiServerLib/lib/snakeyaml-1.28.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
