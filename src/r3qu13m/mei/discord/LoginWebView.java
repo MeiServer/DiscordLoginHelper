@@ -17,7 +17,6 @@ import javax.swing.WindowConstants;
 
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -47,7 +46,8 @@ public class LoginWebView {
 	private void initURLStreamHandler() {
 		URL.setURLStreamHandlerFactory(protocol -> {
 			if ("https".equals(protocol)) {
-				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), LoginWebView.queue, TokenIntercepter.class);
+				return new HTTPSIntercepter<>(url -> url.contains("/api/v"), LoginWebView.queue,
+						TokenIntercepter.class);
 			}
 			return null;
 		});
@@ -93,13 +93,10 @@ public class LoginWebView {
 	}
 
 	private void initFX(final JFXPanel fxPanel) {
-		final Group group = new Group();
-		LoginWebView.scene = new Scene(group);
-		fxPanel.setScene(LoginWebView.scene);
-
 		LoginWebView.webView = new WebView();
 
-		group.getChildren().add(LoginWebView.webView);
+		LoginWebView.scene = new Scene(LoginWebView.webView);
+		fxPanel.setScene(LoginWebView.scene);
 
 		final WebEngine webEngine = LoginWebView.webView.getEngine();
 		webEngine.onResizedProperty();
