@@ -7,8 +7,8 @@
 	<property name="libdir" location="${workdir}/lib" />
 	<property name="releasedir" location="${workdir}/releases" />
 	<property name="meiserverlibdir" location="${workdir}/MeiServerLib" />
-	<property name="destminjar" location="${releasedir}/MeiServer_${version}.min.jar" />
-	<property name="destjar" location="${releasedir}/DiscordLoginHelper_v${version}.jar" />
+	<property name="destminjar" location="${releasedir}/${ant.project.name}_${version}.min.jar" />
+	<property name="destjar" location="${releasedir}/${ant.project.name}_v${version}.jar" />
 	<property name="resourcedir" location="${workdir}/resources" />
 
 	<pathconvert property="lib.classpath">
@@ -39,9 +39,10 @@
 	</target>
 
 	<target name="jar">
-		<copy todir="${bindir}">
+		<!-- <copytodir="${bindir}">
 			<fileset dir="${resourcedir}" />
 		</copy>
+		-->
 
 		<replace dir="${bindir}" token="%%VERSION%%" value="${version}">
 			<include name="**/*.yml" />
