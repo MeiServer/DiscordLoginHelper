@@ -2,3 +2,6 @@ releases/*
 bin/*
 !releases/.gitkeep
 !bin/.gitkeep
+.project
+.classpath
+.settings/*
