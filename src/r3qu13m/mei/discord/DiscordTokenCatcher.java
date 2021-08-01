@@ -101,6 +101,6 @@ public class DiscordTokenCatcher {
 
 		final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
 		webEngine.onResizedProperty();
-		webEngine.load("https://discord.com/channels/@me");
+		webEngine.load("https://discord.com/login");
 	}
 }
