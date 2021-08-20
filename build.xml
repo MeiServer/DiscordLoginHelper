@@ -6,7 +6,7 @@
 	<property name="srcdir" location="${workdir}/src" />
 	<property name="libdir" location="${workdir}/lib" />
 	<property name="releasedir" location="${workdir}/releases" />
-	<property name="destminjar" location="${releasedir}/${ant.project.name}_${version}.min.jar" />
+	<property name="destminjar" location="${releasedir}/${ant.project.name}_v${version}.min.jar" />
 	<property name="destjar" location="${releasedir}/${ant.project.name}_v${version}.jar" />
 	<property name="resourcedir" location="${workdir}/resources" />
 

@@ -1,6 +1,6 @@
 releases/*
 bin/*
-lib/*
+lib/Mei*.jar
 build/*
 !releases/.gitkeep
 !bin/.gitkeep

