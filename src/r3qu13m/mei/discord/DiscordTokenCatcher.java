@@ -1,21 +1,16 @@
 package r3qu13m.mei.discord;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -25,38 +20,48 @@ import java.util.concurrent.BlockingQueue;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileSystemView;
-
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 
 public class DiscordTokenCatcher {
 	private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(100);
-	private static Scene scene;
-	private static JFrame frame;
-	private static WebView webView;
 
-	public static Optional<String> getToken() throws IOException {
-		/*
-		 * DiscordTokenCatcher.initURLStreamHandler();
-		 * 
-		 * SwingUtilities.invokeLater(() -> { DiscordTokenCatcher.initAndShowGUI(); });
-		 * 
-		 * final String res = DiscordTokenCatcher.queue.take(); if (res.equals("")) {
-		 * return Optional.empty(); }
-		 * 
-		 * DiscordTokenCatcher.frame.dispose();
-		 * 
-		 * return Optional.of(res);
-		 */
-		runBrowser();
-		return Optional.empty();
+	public static Optional<String> getToken() throws IOException, InterruptedException {
+		DiscordTokenCatcher.runBrowser();
+
+		final Thread catcherThread = new Thread(() -> {
+			while (true) {
+				final StringBuilder sb = new StringBuilder();
+				try {
+					try (InputStream is = new URL("http://127.0.0.1:2525/").openStream();
+							InputStreamReader isr = new InputStreamReader(is);
+							BufferedReader br = new BufferedReader(isr)) {
+						while (br.ready()) {
+							sb.append(br.readLine());
+						}
+					}
+					final String res = sb.toString();
+					if (res.length() != 0) {
+						DiscordTokenCatcher.queue.put(res);
+
+						try (InputStream is = new URL("http://127.0.0.1:2525/stop").openStream()) {
+							is.read();
+						} catch (final IOException e) {
+							// ignore
+						}
+
+						break;
+					}
+					Thread.sleep(500);
+				} catch (IOException | InterruptedException e) {
+					// do nothing
+				}
+			}
+		});
+
+		catcherThread.start();
+		catcherThread.join();
+
+		return Optional.ofNullable(DiscordTokenCatcher.queue.poll());
 	}
 
 	private static void runBrowser() throws IOException {
@@ -74,8 +79,8 @@ public class DiscordTokenCatcher {
 			throw new RuntimeException(String.format("Unknown environment: %s is not supported!", name));
 		}
 
-		URLConnection conn = new URL(String.format(
-				"https://github.com/MeiServer/DiscordLoginHelper/releases/download/v1.1.1/discordbrowser-%s-x64.zip",
+		final URLConnection conn = new URL(String.format(
+				"https://github.com/MeiServer/DiscordLoginHelper/releases/download/v1.1.2/discordbrowser-%s-x64.zip",
 				arch)).openConnection();
 		conn.setRequestProperty("User-Agent", "DiscordTokenCatcher");
 		conn.connect();
@@ -89,15 +94,7 @@ public class DiscordTokenCatcher {
 		if (!browserDestFile.exists()) {
 			final InputStream is = new BufferedInputStream(conn.getInputStream());
 			final OutputStream os = new FileOutputStream(browserDestFile);
-			final byte buf[] = new byte[1024];
-			while (true) {
-				final int readCount = is.read(buf, 0, 1024);
-				if (readCount == -1) {
-					break;
-				}
-				os.write(buf, 0, readCount);
-			}
-			os.flush();
+
 			is.close();
 			os.close();
 		}
@@ -117,91 +114,37 @@ public class DiscordTokenCatcher {
 				if (entry.isDirectory()) {
 					dest.mkdirs();
 				} else {
-					final OutputStream os = new FileOutputStream(dest);
-					final InputStream is = zf.getInputStream(entry);
-					final byte buf[] = new byte[1024];
-					while (true) {
-						final int readCount = is.read(buf, 0, 1024);
-						if (readCount == -1) {
-							break;
-						}
-						os.write(buf, 0, readCount);
+					try (final OutputStream os = new FileOutputStream(dest);
+							final InputStream is = zf.getInputStream(entry)) {
+						DiscordTokenCatcher.copyToStream(is, os);
 					}
-					os.flush();
-					is.close();
-					os.close();
 				}
 				if (entry.getName().replace(".exe", "").endsWith("discordbrowser")) {
 					executableFile = dest;
 				}
-			}
 
-			Files.setPosixFilePermissions(executableFile.toPath(),
-					EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE));
-			Runtime.getRuntime().exec(executableFile.getAbsolutePath());
+				Files.setPosixFilePermissions(dest.toPath(),
+						EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+								PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
+								PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+								PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE,
+								PosixFilePermission.OTHERS_EXECUTE));
+			}
 		}
 
-		System.err.println("YEAH");
+		System.err.println("Run browser");
+		Runtime.getRuntime().exec(executableFile.getAbsolutePath());
 	}
 
-	private static void initURLStreamHandler() {
-		URL.setURLStreamHandlerFactory(protocol -> {
-			if ("https".equals(protocol)) {
-				return new HTTPSIntercepter<>(url -> url.contains("/users/@me"), DiscordTokenCatcher.queue,
-						TokenIntercepter.class);
+	private static void copyToStream(final InputStream is, final OutputStream os) throws IOException {
+		final byte buf[] = new byte[1024];
+		while (true) {
+			final int readCount = is.read(buf, 0, 1024);
+			if (readCount == -1) {
+				break;
 			}
-			return null;
-		});
-	}
-
-	private static void initAndShowGUI() {
-		// This method is invoked on Swing thread
-		DiscordTokenCatcher.frame = new JFrame("Discord Login");
-		DiscordTokenCatcher.frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-		final JFXPanel fxPanel = new JFXPanel();
-		fxPanel.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(final ComponentEvent e) {
-				Platform.runLater(() -> {
-					final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
-					DiscordTokenCatcher.webView.setPrefSize(DiscordTokenCatcher.scene.getWidth(),
-							DiscordTokenCatcher.scene.getHeight());
-					webEngine.onResizedProperty();
-				});
-			}
-		});
-
-		DiscordTokenCatcher.frame.add(fxPanel, BorderLayout.CENTER);
-		DiscordTokenCatcher.frame.setVisible(true);
-
-		DiscordTokenCatcher.frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(final WindowEvent event) {
-				try {
-					DiscordTokenCatcher.queue.put("");
-				} catch (final InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-
-		DiscordTokenCatcher.frame.getContentPane().setPreferredSize(new Dimension(400, 650));
-		DiscordTokenCatcher.frame.pack();
-
-		Platform.runLater(() -> {
-			DiscordTokenCatcher.initFX(fxPanel);
-		});
-	}
-
-	private static void initFX(final JFXPanel fxPanel) {
-		DiscordTokenCatcher.webView = new WebView();
-
-		DiscordTokenCatcher.scene = new Scene(DiscordTokenCatcher.webView);
-		fxPanel.setScene(DiscordTokenCatcher.scene);
-
-		final WebEngine webEngine = DiscordTokenCatcher.webView.getEngine();
-		webEngine.onResizedProperty();
-		webEngine.load("https://discord.com/login");
+			os.write(buf, 0, readCount);
+		}
+		os.flush();
 	}
 }

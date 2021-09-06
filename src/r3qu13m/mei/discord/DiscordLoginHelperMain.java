@@ -6,7 +6,7 @@ public class DiscordLoginHelperMain {
 	public static void main(final String args[]) {
 		try {
 			System.err.println(DiscordTokenCatcher.getToken());
-		} catch (final IOException e) {
+		} catch (final IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
