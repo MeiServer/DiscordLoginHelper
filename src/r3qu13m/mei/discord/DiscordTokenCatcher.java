@@ -65,7 +65,6 @@ public class DiscordTokenCatcher {
 	}
 
 	private static void runBrowser() throws IOException {
-		System.out.println("Downloading browser...");
 		final String name = System.getProperty("os.name").toLowerCase();
 		String arch;
 
@@ -79,22 +78,24 @@ public class DiscordTokenCatcher {
 			throw new RuntimeException(String.format("Unknown environment: %s is not supported!", name));
 		}
 
-		final URLConnection conn = new URL(String.format(
-				"https://github.com/MeiServer/DiscordLoginHelper/releases/download/v1.1.2/discordbrowser-%s-x64.zip",
-				arch)).openConnection();
-		conn.setRequestProperty("User-Agent", "DiscordTokenCatcher");
-		conn.connect();
-
 		final File baseDir = new File(FileSystemView.getFileSystemView().getDefaultDirectory(), "MeiServer");
 		if (!baseDir.exists()) {
 			baseDir.mkdirs();
 		}
 
 		final File browserDestFile = new File(baseDir, "DiscordBrowser.zip");
+
 		if (!browserDestFile.exists()) {
+			System.out.println("Downloading browser...");
+			final URLConnection conn = new URL(String.format(
+					"https://github.com/MeiServer/DiscordLoginHelper/releases/download/v1.1.2/discordbrowser-%s-x64.zip",
+					arch)).openConnection();
+			conn.setRequestProperty("User-Agent", "DiscordTokenCatcher");
+			conn.connect();
+
 			final InputStream is = new BufferedInputStream(conn.getInputStream());
 			final OutputStream os = new FileOutputStream(browserDestFile);
-
+			copyToStream(is, os);
 			is.close();
 			os.close();
 		}
